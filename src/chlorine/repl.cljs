@@ -219,7 +219,7 @@
                                "See REPL for any failures.")))))
 
 (defn show-source-at-cursor!
-  ([] (show-source-at-cursor! (current-editor)))
+  ([] (show-source-at-cursor! (atom/current-editor)))
   ([^js editor]
    (let [pos  (.getCursorBufferPosition editor)
          s    (atom/current-var editor)
@@ -237,7 +237,7 @@
                      identity)))))
 
 (defn load-file!
-  ([] (load-file! (current-editor)))
+  ([] (load-file! (atom/current-editor)))
   ([^js editor]
    (let [file-name (.getPath editor)
          ;; needs file system fixing
