@@ -243,7 +243,9 @@
   ([^js editor]
    (let [file-name (.getPath editor)
          ;; needs file system fixing
-         code (str "(load-file \"" file-name "\")")]
+         code (str "(do"
+                   " (println \"Loading\" \"" file-name "\")"
+                   " (load-file \"" file-name "\"))")]
      (evaluate-aux editor
                    (ns-for editor)
                    (.getFileName editor)
