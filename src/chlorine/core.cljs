@@ -6,7 +6,8 @@
             [chlorine.features.refresh :as refresh]
             [chlorine.ui.doc :as doc]
             [chlorine.configs :as configs]
-            [chlorine.ui.console :as console]))
+            [chlorine.ui.console :as console]
+            [chlorine.features.code :as code]))
 
 (def config (configs/get-configs))
 
@@ -43,7 +44,9 @@
   (aux/command-for "run-test-for-var" #(repl/run-test-at-cursor!))
 
   (aux/command-for "refresh-namespaces" refresh/run-refresh!)
-  (aux/command-for "toggle-refresh-mode" refresh/toggle-refresh))
+  (aux/command-for "toggle-refresh-mode" refresh/toggle-refresh)
+
+  (aux/command-for "go-to-var-definition" code/goto-var))
 
 (defn deactivate [s]
   (.dispose ^js @aux/subscriptions))
