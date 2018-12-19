@@ -177,6 +177,40 @@
                      (. editor getSelectedBufferRange)
                      (.getSelectedText editor))))
 
+(defn wrap-in-rebl-submit
+  "Clojure 1.10 only, require REBL on the classpath (and UI open)."
+  [code]
+  (str "(let [value " code "]"
+       " (when-let [d-val ((requiring-resolve 'clojure.datafy/datafy) value)]"
+       "  ((requiring-resolve 'cognitect.rebl/submit) '" code " d-val))"
+       " value)"))
+
+(defn inspect-top-block!
+  ([] (inspect-top-block! (atom/current-editor)))
+  ([^js editor]
+   (let [range (. EditorUtils
+                 (getCursorInBlockRange editor #js {:topLevel true}))]
+     (some->> range
+              (.getTextInBufferRange editor)
+              (wrap-in-rebl-submit)
+              (eval-and-present editor
+                                (ns-for editor)
+                                (.getPath editor)
+                                range)))))
+
+(defn inspect-block!
+  ([] (inspect-block! (atom/current-editor)))
+  ([^js editor]
+   (let [range (. EditorUtils
+                 (getCursorInBlockRange editor))]
+     (some->> range
+              (.getTextInBufferRange editor)
+              (wrap-in-rebl-submit)
+              (eval-and-present editor
+                                (ns-for editor)
+                                (.getPath editor)
+                                range)))))
+
 (defn run-tests-in-ns!
   ([] (run-tests-in-ns! (atom/current-editor)))
   ([^js editor]
