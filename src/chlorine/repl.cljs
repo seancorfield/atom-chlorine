@@ -207,8 +207,8 @@
    (let [pos  (.getCursorBufferPosition editor)
          s    (atom/current-var editor)
          code (str "(do"
-                   "  (clojure.test/test-vars [#'" s "])"
-                   "  (println \"Tested\" '" s "))")]
+                   " (clojure.test/test-vars [#'" s "])"
+                   " (println \"Tested\" '" s "))")]
      (evaluate-aux editor
                    (ns-for editor)
                    (.getFileName editor)
@@ -218,8 +218,8 @@
                    #(atom/info (str "Tested " s)
                                "See REPL for any failures.")))))
 
-(defn show-source-at-cursor!
-  ([] (show-source-at-cursor! (atom/current-editor)))
+(defn source-for-var!
+  ([] (source-for-var! (atom/current-editor)))
   ([^js editor]
    (let [pos  (.getCursorBufferPosition editor)
          s    (atom/current-var editor)

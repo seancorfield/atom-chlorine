@@ -35,7 +35,7 @@
   (aux/command-for "evaluate-top-block" #(repl/evaluate-top-block!))
   (aux/command-for "evaluate-selection" #(repl/evaluate-selection!))
   (aux/command-for "doc-for-var" doc/doc)
-  (aux/command-for "source-for-var" #(repl/show-source-at-cursor!))
+  (aux/command-for "source-for-var" #(repl/source-for-var!))
   (aux/command-for "clear-console" console/clear)
 
   (aux/command-for "load-file" #(repl/load-file!))
