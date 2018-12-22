@@ -252,24 +252,6 @@
                    #(atom/info (str "Tested " s)
                                "See REPL for any failures.")))))
 
-(defn source-for-var!
-  ([] (source-for-var! (atom/current-editor)))
-  ([^js editor]
-   (let [pos  (.getCursorBufferPosition editor)
-         s    (atom/current-var editor)
-         code (str "(do"
-                   " (require 'clojure.repl)"
-                   " (clojure.repl/source " s "))")]
-     (if (need-cljs? editor)
-       (atom/warn "Source For Var is only supported for Clojure" "")
-       (evaluate-aux editor
-                     (ns-for editor)
-                     (.getFileName editor)
-                     (.. pos -row)
-                     (.. pos -column)
-                     code
-                     identity)))))
-
 (defn load-file!
   ([] (load-file! (atom/current-editor)))
   ([^js editor]
@@ -289,6 +271,24 @@
                    0
                    code
                    #(atom/info "Loaded file" file-name)))))
+
+(defn source-for-var!
+  ([] (source-for-var! (atom/current-editor)))
+  ([^js editor]
+   (let [pos  (.getCursorBufferPosition editor)
+         s    (atom/current-var editor)
+         code (str "(do"
+                   " (require 'clojure.repl)"
+                   " (clojure.repl/source " s "))")]
+     (if (need-cljs? editor)
+       (atom/warn "Source For Var is only supported for Clojure" "")
+       (evaluate-aux editor
+                     (ns-for editor)
+                     (.getFileName editor)
+                     (.. pos -row)
+                     (.. pos -column)
+                     code
+                     identity)))))
 
 (def exports
   #js {:eval_and_present eval-and-present
