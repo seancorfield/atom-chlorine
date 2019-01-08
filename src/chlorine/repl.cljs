@@ -186,8 +186,10 @@
   "Clojure 1.10 only, require REBL on the classpath (and UI open)."
   [code]
   (str "(let [value " code "]"
-       " (when-let [d-val ((requiring-resolve 'clojure.datafy/datafy) value)]"
-       "  ((requiring-resolve 'cognitect.rebl/submit) '" code " d-val))"
+       " (try"
+       "  (when-let [d-val ((requiring-resolve 'clojure.datafy/datafy) value)]"
+       "   ((requiring-resolve 'cognitect.rebl/submit) '" code " d-val))"
+       "  (catch Throwable _))"
        " value)"))
 
 (defn inspect-top-block!
