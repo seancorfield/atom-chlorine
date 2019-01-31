@@ -11,13 +11,18 @@ cd atom-chlorine # or the name you gave when cloning
 git submodule init
 git submodule update
 npm install
-cp repl-tooling/resources .
+cp repl-tooling/resources . -a
 npx shadow-cljs watch dev
 ```
 
 This will fire up a compiler for ClojureScript. If you symlink your directory on `~/.atom/packages`, you can use it while developing itself!
 
 Please notice that Chlorine only activates if you run any of the "connect" commands. You don't **need** to connect into a Clojure REPL, just fire the command and then you'll see `JS runtime connected.` on shadow.
+
+## UNREPL
+This project parses the result of UNREPL and shows then on JS side. The way ClojureScript works today is to parse big numbers (`10N` and `10M`) into Javascript Numbers, and this will obviously not work when rendering data. So, we use a custom-made UNREPL blob: https://github.com/mauricioszabo/unrepl.
+
+The additions were to change the way we parse big numbers (with reader tags) and also to add more functionality to Java classes (show methods, constructors, and enumerators).
 
 ## Testing
 
