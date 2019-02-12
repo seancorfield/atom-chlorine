@@ -104,6 +104,19 @@
                 (eval/evaluate "(clojure.repl/pst)" {} identity))
         (inline/render-error! inline-result (:error parsed))))))
 
+(defn insert-result [^js target-range eval-result]
+  (let [parsed (helpers/parse-result eval-result)]
+    (if (contains? parsed :result)
+      (when target-range
+        (let [^js editor (atom/current-editor)]
+          (.setSelectedBufferRange editor target-range)
+          (.insertText editor (str " ;=> " (:result parsed)))))
+      (let [^js editor (atom/current-editor)
+            inline-result (inline/new-result editor (.. target-range -end -row))]
+        (some-> @state :repls :clj-eval
+                (eval/evaluate "(clojure.repl/pst)" {} identity))
+        (inline/render-error! inline-result (:error parsed))))))
+
 (defn need-cljs? [editor]
   (or
    (-> @state :config :eval-mode (= :cljs))
@@ -152,6 +165,25 @@
                                :pass opts}
                               #(set-inline-result result %)))))))
 
+(defn eval-and-insert
+  ([^js editor ns-name filename ^js range code]
+   (eval-and-insert editor ns-name filename range code {}))
+  ([^js editor ns-name filename ^js range code opts]
+   (let [row (.. range -start -row)
+         col (.. range -start -column)
+         target #js {:start (.. range -end) :end (.. range -end)}]
+
+     (if (need-cljs? editor)
+       (eval-cljs editor ns-name filename row col code
+                  (inline/new-result editor (.. range -end -row))
+                  opts
+                  #(insert-result target %))
+       (some-> @state :repls :clj-eval
+               (eval/evaluate code
+                              {:namespace ns-name :row row :col col :filename filename
+                               :pass opts}
+                              #(insert-result target %)))))))
+
 (def ^:private EditorUtils (js/require "./editor-utils"))
 (defn top-level-code [^js editor ^js range]
   (let [range (. EditorUtils
@@ -173,6 +205,18 @@
                                 (.getPath editor)
                                 range)))))
 
+(defn evaluate-top-block-insert!
+  ([] (evaluate-top-block-insert! (atom/current-editor)))
+  ([^js editor]
+   (let [range (. EditorUtils
+                 (getCursorInBlockRange editor #js {:topLevel true}))]
+     (some->> range
+              (.getTextInBufferRange editor)
+              (eval-and-insert editor
+                               (ns-for editor)
+                               (.getPath editor)
+                               range)))))
+
 (defn evaluate-block!
   ([] (evaluate-block! (atom/current-editor)))
   ([^js editor]
@@ -184,6 +228,18 @@
                                 (ns-for editor)
                                 (.getPath editor)
                                 range)))))
+
+(defn evaluate-block-insert!
+  ([] (evaluate-block-insert! (atom/current-editor)))
+  ([^js editor]
+   (let [range (. EditorUtils
+                 (getCursorInBlockRange editor))]
+     (some->> range
+              (.getTextInBufferRange editor)
+              (eval-and-insert editor
+                               (ns-for editor)
+                               (.getPath editor)
+                               range)))))
 
 (defn evaluate-selection!
   ([] (evaluate-selection! (atom/current-editor)))

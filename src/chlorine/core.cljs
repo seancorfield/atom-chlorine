@@ -52,6 +52,9 @@
   (aux/command-for "inspect-block" #(repl/inspect-block!))
   (aux/command-for "inspect-top-block" #(repl/inspect-top-block!))
 
+  (aux/command-for "evaluate-block-insert" #(repl/evaluate-block-insert!))
+  (aux/command-for "evaluate-top-block-insert" #(repl/evaluate-top-block-insert!))
+
   (aux/command-for "refresh-namespaces" refresh/run-refresh!)
   (aux/command-for "toggle-refresh-mode" refresh/toggle-refresh)
 
