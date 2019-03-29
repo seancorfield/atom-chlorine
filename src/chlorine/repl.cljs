@@ -43,7 +43,7 @@
            #(handle-disconnect!))]
     (.then p (fn [repls]
                (atom/info "Clojure REPL connected" "")
-               (.. js/atom -workspace (open "atom://chlorine/console" #js {:split "right"
+               (.. js/atom -workspace (open "atom://chlorine/console" #js {:split "down"
                                                                            :searchAllPanes true}))
                (some-> @console/console (register-destroy))
                (swap! state #(-> %
