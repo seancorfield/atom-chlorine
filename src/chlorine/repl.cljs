@@ -110,7 +110,7 @@
       (when target-range
         (let [^js editor (atom/current-editor)]
           (.setSelectedBufferRange editor target-range)
-          (.insertText editor (str " ;=> " (:result parsed)))))
+          (.insertText editor (str "\n;;=> " (:result parsed) "\n"))))
       (let [^js editor (atom/current-editor)
             inline-result (inline/new-result editor (.. target-range -end -row))]
         (some-> @state :repls :clj-eval
