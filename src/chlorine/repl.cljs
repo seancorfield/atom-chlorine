@@ -255,10 +255,18 @@
   [code]
   (str "(let [value " code "]"
        " (try"
-       "  (when-let [d-val ((requiring-resolve 'clojure.datafy/datafy) value)]"
-       "   ((requiring-resolve 'cognitect.rebl/submit) '" code " d-val))"
+       "  ((requiring-resolve 'cognitect.rebl/submit) '" code " value)"
        "  (catch Throwable _))"
        " value)"))
+
+(defn inspect-selection!
+  ([] (inspect-selection! (atom/current-editor)))
+  ([^js editor]
+   (eval-and-present editor
+                     (ns-for editor)
+                     (.getPath editor)
+                     (. editor getSelectedBufferRange)
+                     (wrap-in-rebl-submit (.getSelectedText editor)))))
 
 (defn inspect-top-block!
   ([] (inspect-top-block! (atom/current-editor)))

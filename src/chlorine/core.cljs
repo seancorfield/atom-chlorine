@@ -51,6 +51,7 @@
 
   (aux/command-for "inspect-block" #(repl/inspect-block!))
   (aux/command-for "inspect-top-block" #(repl/inspect-top-block!))
+  (aux/command-for "inspect-selection" #(repl/inspect-selection!))
 
   (aux/command-for "evaluate-block-insert" #(repl/evaluate-block-insert!))
   (aux/command-for "evaluate-top-block-insert" #(repl/evaluate-top-block-insert!))
