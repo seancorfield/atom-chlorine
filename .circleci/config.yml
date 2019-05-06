@@ -1,0 +1,30 @@
+version: 2.1
+defaults: &defaults
+  machine:
+    image: circleci/classic:edge
+
+jobs:
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: ./scripts/ci
+
+  publish:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: ./scripts/ci-prepare-release
+
+workflows:
+  version: 2
+  default-workflow:
+    jobs:
+      - test
+
+      - publish:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /^release-v.*/
