@@ -12,7 +12,10 @@
             [repl-tooling.integrations.connection :as conn]
             [repl-tooling.editor-integration.connection :as connection]
             [chlorine.ui.atom :as atom]
-            [clojure.core.async :as async :include-macros true]))
+            [clojure.core.async :as async :include-macros true]
+            ["atom" :refer [CompositeDisposable]]))
+
+(def ^:private commands-subs (atom (CompositeDisposable.)))
 
 (defn- handle-disconnect! []
   (swap! state assoc
@@ -20,15 +23,16 @@
                  :cljs-eval nil
                  :clj-aux nil}
          :connection nil)
+  (.dispose ^js @commands-subs)
+  (reset! commands-subs (CompositeDisposable.))
   (atom/info "Disconnected from REPLs" ""))
 
-(defn- register-destroy [^js console]
-  (async/go-loop []
-    (if (.currentPane console)
-      (-> console .currentPane (.onDidDestroy #(connection/disconnect!)))
-      (do
-        (async/<! (async/timeout 500))
-        (recur)))))
+(defn- register-commands! [commands]
+  (let [f (-> commands :break-evaluation :command)
+        disp (-> js/atom .-commands (.add "atom-text-editor"
+                                          "chlorine:break-evaluation"
+                                          f))]
+    (.add ^js @commands-subs disp)))
 
 (defn connect! [host port]
   (let [p (connection/connect-unrepl!
@@ -43,13 +47,13 @@
             #(handle-disconnect!)})]
     (.then p (fn [repls]
                (atom/info "Clojure REPL connected" "")
-               (.. js/atom -workspace (open "atom://chlorine/console" #js {:split "down"
-                                                                           :searchAllPanes true}))
-               (some-> @console/console (register-destroy))
+               (console/open-console (-> @state :config :console-pos)
+                                     #(connection/disconnect!))
                (swap! state #(-> %
                                  (assoc-in [:repls :clj-eval] (:clj/repl repls))
                                  (assoc-in [:repls :clj-aux] (:clj/aux repls))
-                                 (assoc :connection {:host host :port port})))))))
+                                 (assoc :connection {:host host :port port})))
+               (-> repls :editor/commands register-commands!)))))
 
 (defn callback [output]
   (when (nil? output)
@@ -65,13 +69,11 @@
 (def callback-fn (atom callback))
 
 (defn connect-cljs! [host port]
-  (let [repl (cljs/repl :clj-eval host port #(@callback-fn %))]
+  (let [repl (cljs/repl :cljs-eval host port #(@callback-fn %))]
     (eval/evaluate repl ":ok" {} (fn []
                                    (atom/info "ClojureScript REPL connected" "")
-                                   (.. js/atom
-                                       -workspace
-                                       (open "atom://chlorine/console"
-                                             #js {:split "right"}))
+                                   (console/open-console (-> @state :config :console-pos)
+                                                         #(connection/disconnect!))
                                    (swap! state
                                           #(-> %
                                                (assoc-in [:repls :cljs-eval] repl)
@@ -79,17 +81,22 @@
                                                                    :port port})))))))
 
 (def trs {:no-shadow-file "File shadow-cljs.edn not found"
+          :no-worker "No worker for first build ID"
           :unknown "Unknown error"})
 
 (defn connect-self-hosted []
   (let [{:keys [host port]} (:connection @state)
         dirs (->> js/atom .-project .getDirectories (map #(.getPath ^js %)))]
-    (.. (conn/auto-connect-embedded! host port dirs)
+    (.. (conn/auto-connect-embedded! host port dirs
+                                     {:on-stdout
+                                      #(some-> ^js @console/console (.stdout %))
+                                      :on-result
+                                      #(when (:result %)
+                                         (inline/render-on-console! @console/console %))})
+
         (then #(if-let [error (:error %)]
-                 (do
-                   (prn error)
-                   (atom/error "Error connecting to ClojureScript"
-                               (get trs error error)))
+                 (atom/error "Error connecting to ClojureScript"
+                             (get trs error error))
                  (do
                    (swap! state assoc-in [:repls :cljs-eval] %)
                    (atom/info "ClojureScript REPL connected" "")))))))

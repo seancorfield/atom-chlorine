@@ -54,7 +54,7 @@ describe('Atom should open and evaluate code', function () {
     await app.client.keys("Tab")
     await app.client.keys("3333")
     await app.client.keys("Enter")
-    assert.ok(await haveSelector("div*=Console"))
+    assert.ok(await haveSelector("ink-console"))
     await sendCommand("window:focus-next-pane")
     assert.ok(await gotoTab('test.clj'))
   })
@@ -63,7 +63,6 @@ describe('Atom should open and evaluate code', function () {
     it('evaluates code', async () => {
       await time(1000)
       await sendCommand("vim-mode-plus:activate-insert-mode")
-      // await time(1000)
       assert.ok(await gotoTab('test.clj'))
       await app.client.keys("(ns user.test1)")
       await sendCommand("chlorine:evaluate-block")
@@ -72,6 +71,14 @@ describe('Atom should open and evaluate code', function () {
       await app.client.keys("\n\n(str (+ 90 120))")
       await sendCommand("chlorine:evaluate-block")
       assert.ok(await haveSelector(`//div[contains(., '"210"')]`))
+    })
+
+    it('breaks evaluation', async () => {
+      await sendCommand('inline-results:clear-all')
+      await evalCommand(`(Thread/sleep 2000)`)
+      await time(400)
+      await sendCommand("chlorine:break-evaluation")
+      assert.ok(await haveSelector(`span*=Evaluation interrupted`))
     })
 
     it('shows function doc', async () => {
